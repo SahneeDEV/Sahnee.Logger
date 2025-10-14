@@ -4,18 +4,18 @@ defmodule Sahnee.Logger.MeatbagFormatter do
   """
 
   # Some metadata is not relevant for human consumtion.
-  @ignored_meta [:file, :ansi_color, :mfa, :domain, :gl, :time, :erl_level]
+  @ignored_meta [:file, :ansi_color, :domain, :gl, :time, :erl_level]
 
   def format(level, message, timestamp, metadata) do
+    # Drop stuff we don't want displayed
+    metadata = Keyword.drop(metadata, @ignored_meta)
     # Read opts
     {application, metadata} = Keyword.pop(metadata, :application)
-    {module, metadata} = Keyword.pop(metadata, :module)
-    {function, metadata} = Keyword.pop(metadata, :function)
+    {mfa, metadata} = Keyword.pop(metadata, :mfa)
     {line, metadata} = Keyword.pop(metadata, :line)
     {pid, metadata} = Keyword.pop(metadata, :pid)
     {registered_name, metadata} = Keyword.pop(metadata, :registered_name)
-    # Drop stuff we don't want displayed
-    metadata = Keyword.drop(metadata, @ignored_meta)
+    {module, function, a} = mfa
 
     # Format stuff
     name = if registered_name, do: registered_name, else: pid
@@ -26,7 +26,7 @@ defmodule Sahnee.Logger.MeatbagFormatter do
     meta_str = format_metadata(metadata)
 
     "[#{time_str}] #{level_str} " <>
-      "[#{application} | #{inspect(name)}@#{module_str}.#{function}:#{line}] " <>
+      "[#{application} | #{inspect(name)}@#{module_str}.#{function}/#{a}:#{line}] " <>
       "#{message}#{meta_str}\n"
   end
 
